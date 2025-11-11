@@ -1,41 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Producto {
-  id           String      @id @default(uuid())
-  nombre       String
-  slug         String      @unique
-  descripcion  String?
-  precio_cents Int
-  stock        Int
-  imagen_url   String?
-  creadoAt     DateTime    @default(now())
+  id             String        @id @default(uuid())
+  nombre         String
+  slug           String        @unique
+  descripcion    String?
+  precio_cents   Int
+  stock          Int
+  imagen_url     String?
+  creadoAt       DateTime      @default(now())
   categoriaId    String?
-  categoria      Categoria?  @relation(fields: [categoriaId], references: [id])
   subcategoriaId String?
+  ordenItems     OrdenItem[]
   subcategoria   Subcategoria? @relation(fields: [subcategoriaId], references: [id])
-  ordenItems   OrdenItem[]
+  categoria      Categoria?    @relation(fields: [categoriaId], references: [id])
 }
 
 model Categoria {
-  id           String       @id @default(uuid())
-  nombre       String       @unique
+  id            String         @id @default(uuid())
+  nombre        String         @unique
+  productos     Producto[]
   subcategorias Subcategoria[]
-  productos    Producto[]
 }
 
 model Subcategoria {
-  id          String    @id @default(uuid())
+  id          String     @id @default(uuid())
   nombre      String
   categoriaId String
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
   productos   Producto[]
+  categoria   Categoria  @relation(fields: [categoriaId], references: [id])
+
   @@unique([nombre, categoriaId])
 }
 
@@ -53,22 +54,22 @@ model Usuario {
 model Orden {
   id               String      @id @default(uuid())
   usuarioId        String?
-  usuario          Usuario?    @relation(fields: [usuarioId], references: [id])
   emailInvitado    String?
   total_cents      Int
   estado           String      @default("pendiente")
   mp_preference_id String?
   mp_payment_id    String?
   creadoAt         DateTime    @default(now())
+  usuario          Usuario?    @relation(fields: [usuarioId], references: [id])
   items            OrdenItem[]
 }
 
 model OrdenItem {
   id                String   @id @default(uuid())
   ordenId           String
-  orden             Orden    @relation(fields: [ordenId], references: [id])
   productoId        String
-  producto          Producto @relation(fields: [productoId], references: [id])
   cantidad          Int
   precio_unit_cents Int
+  producto          Producto @relation(fields: [productoId], references: [id])
+  orden             Orden    @relation(fields: [ordenId], references: [id])
 }
