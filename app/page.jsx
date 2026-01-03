@@ -1,5 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import ProductsGridClient from "@/components/ProductsGridClient";
 
 export default function Home() {
   const [productos, setProductos] = useState([]);
@@ -8,10 +11,12 @@ export default function Home() {
   useEffect(() => {
     async function obtenerProductos() {
       try {
-        const res = await fetch("/api/productos", { cache: "no-store" });
+        const res = await fetch("http://localhost:3001/api/productos", {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("Error al cargar productos");
         const data = await res.json();
-        setProductos(data.productos || data); // Toma el array directo o desde una propiedad
+        setProductos(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error(error);
       } finally {
@@ -21,112 +26,94 @@ export default function Home() {
     obtenerProductos();
   }, []);
 
-// ✅ Detectar automáticamente las categorías distintas
-const categoriasUnicas = [...new Set(productos.map((p) => p.categoriaId))];
+  const categoriasUnicas = useMemo(
+    () => [...new Set(productos.map((p) => p.categoriaId))],
+    [productos]
+  );
 
-const productosCat1 = productos
-  .filter((p) => p.categoriaId === categoriasUnicas[0])
-  .slice(0, 4);
-const productosCat2 = productos
-  .filter((p) => p.categoriaId === categoriasUnicas[1])
-  .slice(0, 4);
+  const productosCat1 = useMemo(
+    () =>
+      productos
+        .filter((p) => p.categoriaId === categoriasUnicas[0])
+        .slice(0, 4),
+    [productos, categoriasUnicas]
+  );
 
-
-  // Imagen por defecto online
-  const imagenDefault = "https://via.placeholder.com/300x300?text=Sin+imagen";
+  const productosCat2 = useMemo(
+    () =>
+      productos
+        .filter((p) => p.categoriaId === categoriasUnicas[1])
+        .slice(0, 4),
+    [productos, categoriasUnicas]
+  );
 
   return (
-    <div className="flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-6 py-20 text-center">
       {/* Bloque 1: Oferta del día */}
-      <section className="w-full max-w-6xl mb-16">
-        <h1 className="text-4xl font-extrabold mb-4 text-blue-600 tracking-tight">
+      <section className="mb-16 w-full max-w-6xl">
+        <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-blue-600">
           ¡Oferta del día!
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="mb-6 text-lg text-gray-600">
           Fundas y cargadores con hasta{" "}
           <span className="font-semibold text-blue-600">40% OFF</span>.
         </p>
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition-all">
+        <Link
+          href="/productos"
+          className="inline-block rounded-lg bg-blue-600 px-6 py-2 text-white shadow hover:bg-blue-700 transition-all"
+        >
           Ver ofertas
-        </button>
+        </Link>
       </section>
 
-      {/* Bloque 2: Productos destacados - Electrónica */}
-      <section className="w-full max-w-6xl mb-24">
-        <h2 className="text-3xl font-semibold mb-8 text-gray-800">
-          Productos destacados - Categoría {categoriasUnicas[0] || "N/A"}
+      {/* Bloque 2: Productos destacados - Categoría 1 */}
+      <section className="mb-24 w-full max-w-6xl text-left">
+        <h2 className="mb-4 text-2xl font-semibold text-gray-800">
+          Productos destacados
+          {categoriasUnicas[0] ? ` – Categoría ${categoriasUnicas[0]}` : ""}
         </h2>
+
         {cargando ? (
-          <p className="text-gray-500 animate-pulse">Cargando productos...</p>
+          <p className="animate-pulse text-gray-500">
+            Cargando productos...
+          </p>
         ) : productosCat1.length === 0 ? (
           <p className="text-gray-500">
-            No hay productos de electrónica disponibles.
+            No hay productos disponibles en esta categoría.
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {productosCat1.map((p) => (
-              <div
-                key={p.id}
-                className="bg-white shadow-md rounded-xl overflow-hidden p-4 hover:shadow-lg hover:-translate-y-1 transition-all"
-              >
-                <img
-                  src={p.imagen || imagenDefault}
-                  alt={p.nombre}
-                  className="h-40 w-full object-contain mb-3"
-                />
-                <h3 className="font-medium text-gray-800">{p.nombre}</h3>
-                <p className="text-blue-600 font-semibold">${p.precio}</p>
-                <button className="mt-3 w-full bg-blue-600 text-white py-1.5 rounded-md hover:bg-blue-700 transition">
-                  Ver más
-                </button>
-              </div>
-            ))}
-          </div>
+          <ProductsGridClient productos={productosCat1} />
         )}
       </section>
 
-      {/* Bloque 3: Productos destacados - Otra categoría */}
-      <section className="w-full max-w-6xl mb-24">
-        <h2 className="text-3xl font-semibold mb-8 text-gray-800">
-          Productos destacados - Categoría {categoriasUnicas[1] || "N/A"}
-       </h2>
+      {/* Bloque 3: Productos destacados - Categoría 2 */}
+      <section className="mb-24 w-full max-w-6xl text-left">
+        <h2 className="mb-4 text-2xl font-semibold text-gray-800">
+          Más productos recomendados
+          {categoriasUnicas[1] ? ` – Categoría ${categoriasUnicas[1]}` : ""}
+        </h2>
+
         {cargando ? (
-          <p className="text-gray-500 animate-pulse">Cargando productos...</p>
+          <p className="animate-pulse text-gray-500">
+            Cargando productos...
+          </p>
         ) : productosCat2.length === 0 ? (
           <p className="text-gray-500">
-            No hay productos de telefonía disponibles.
+            No hay productos disponibles en esta categoría.
           </p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {productosCat2.map((p) => (
-              <div
-                key={p.id}
-                className="bg-white shadow-md rounded-xl overflow-hidden p-4 hover:shadow-lg hover:-translate-y-1 transition-all"
-              >
-                <img
-                  src={p.imagen || imagenDefault}
-                  alt={p.nombre}
-                  className="h-40 w-full object-contain mb-3"
-                />
-                <h3 className="font-medium text-gray-800">{p.nombre}</h3>
-                <p className="text-blue-600 font-semibold">${p.precio}</p>
-                <button className="mt-3 w-full bg-blue-600 text-white py-1.5 rounded-md hover:bg-blue-700 transition">
-                  Ver más
-                </button>
-              </div>
-            ))}
-          </div>
+          <ProductsGridClient productos={productosCat2} />
         )}
       </section>
 
       {/* Bloque 4: Sobre nosotros */}
-      <section className="bg-gray-900 text-white w-full py-16 mt-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <h3 className="text-2xl font-semibold mb-4">Sobre nosotros</h3>
-          <p className="text-gray-300 leading-relaxed">
+      <section className="mt-8 w-full bg-gray-900 py-16 text-white">
+        <div className="mx-auto max-w-4xl px-4 text-left">
+          <h3 className="mb-4 text-2xl font-semibold">Sobre nosotros</h3>
+          <p className="leading-relaxed text-gray-300">
             Somos una tienda especializada en productos electrónicos, fundas,
             cargadores y accesorios. Nuestro objetivo es ofrecer calidad,
-            precio y atención personalizada, brindándote una experiencia
+            buen precio y atención personalizada, brindándote una experiencia
             de compra moderna, rápida y segura.
           </p>
         </div>

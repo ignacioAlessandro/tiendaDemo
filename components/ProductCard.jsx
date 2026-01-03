@@ -1,47 +1,60 @@
+// components/ProductCard.jsx
 "use client";
 
 import Link from "next/link";
 
-export default function ProductCard({ producto, onAddToCart, isLogged }) {
-  // precio: acepta precio_cents o precio simple
-  const precio = producto.precio_cents ? (producto.precio_cents / 100).toFixed(2) : producto.precio ?? "0.00";
+export default function ProductCard({ producto }) {
+  if (!producto) return null;
+
+  const imagen =
+    producto.imagenPrincipal ||
+    producto.imagen_url ||
+    "/images/placeholder.png";
+
+  const precio =
+    producto.precio_cents != null
+      ? (producto.precio_cents / 100).toFixed(2)
+      : producto.precio != null
+      ? Number(producto.precio).toFixed(2)
+      : "0.00";
+
+  const descripcionCorta = (producto.descripcion || "").slice(0, 80);
 
   return (
-    <article className="border rounded-lg p-4 bg-white hover:shadow-lg transition">
+    <article className="flex flex-col rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition">
       <Link href={`/productos/${producto.id}`} className="block">
-        <div className="w-full h-44 flex items-center justify-center mb-3 bg-gray-50 rounded">
+        <div className="flex h-40 w-full items-center justify-center rounded-lg bg-gray-50 mb-3">
           <img
-            src={producto.imagen_url || "/images/placeholder.png"}
-            alt={producto.nombre || "producto"}
-            className="max-h-40 object-contain"
+            src={imagen}
+            alt={producto.nombre || "Producto"}
+            className="max-h-36 w-full object-contain"
           />
         </div>
       </Link>
 
-      <div>
-        <h3 className="text-lg font-semibold">
+      <div className="flex flex-1 flex-col">
+        <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
           <Link href={`/productos/${producto.id}`}>{producto.nombre}</Link>
         </h3>
-        <p className="text-sm text-gray-600 line-clamp-2">{producto.descripcion || ""}</p>
 
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <span className="text-xl font-bold">${precio}</span>
-            <div className="text-xs text-gray-500">Stock: {producto.stock ?? "—"}</div>
-          </div>
+        {descripcionCorta && (
+          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+            {descripcionCorta}
+            {producto.descripcion &&
+              producto.descripcion.length > 80 &&
+              "..."}
+          </p>
+        )}
 
-          <div>
-            <button
-              onClick={() => onAddToCart && onAddToCart(producto)}
-              disabled={!isLogged}
-              className={`px-3 py-1 rounded text-sm font-medium shadow-sm ${
-                isLogged ? "bg-indigo-600 text-white hover:bg-indigo-700" : "bg-gray-200 text-gray-600 cursor-not-allowed"
-              }`}
-              title={!isLogged ? "Debes iniciar sesión para agregar al carrito" : "Agregar al carrito"}
-            >
-              Añadir
-            </button>
-          </div>
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <span className="text-lg font-bold text-blue-600">${precio}</span>
+
+          <Link
+            href={`/productos/${producto.id}`}
+            className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Ver más
+          </Link>
         </div>
       </div>
     </article>

@@ -1,7 +1,9 @@
+// app/layout.jsx
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import Providers from "@/components/Providers";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import Providers from "../components/Providers";
+
 export const metadata = {
   title: "Tienda Demo | Electrónica y Accesorios",
   description: "Explorá los mejores productos electrónicos al mejor precio.",
@@ -19,12 +21,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body>
-        <Header />
+       <body className="min-h-screen bg-gray-50">
         <Providers>
-          <main className="min-h-screen">{children}</main>
+          <Header />
+          <main className="min-h-[calc(100vh-56px)]">{children}</main>
+          <Footer />
         </Providers>
-        <Footer />
       </body>
     </html>
   );

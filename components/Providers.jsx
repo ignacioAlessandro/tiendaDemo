@@ -1,7 +1,13 @@
 // components/Providers.jsx
 "use client";
-import { CartProvider } from "./context/CartContext";
+
+import { AuthProvider } from "@/app/context/AuthContext";
+import { CartProvider } from "@/components/context/CartContext";
 
 export default function Providers({ children }) {
-  return <CartProvider>{children}</CartProvider>;
+  return (
+    <AuthProvider>
+      <CartProvider>{children}</CartProvider>
+    </AuthProvider>
+  );
 }
