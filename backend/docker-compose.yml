@@ -6,7 +6,8 @@ services:
     container_name: tienda_postgres
     restart: always
     ports:
-      - "5432:5432"
+    - "5433:5432"
+
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123

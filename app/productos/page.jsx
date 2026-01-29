@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import ProductsGridClient from "@/components/ProductsGridClient";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api";
 
 export default function ProductosPage() {
   const [productos, setProductos] = useState([]);
@@ -12,15 +14,14 @@ export default function ProductosPage() {
   const [categoria, setCategoria] = useState("");
   const [orden, setOrden] = useState("mas_vendido");
 
-  const router = useRouter();
-
   useEffect(() => {
     const fetchProductos = async () => {
       setCargando(true);
       try {
-        const res = await fetch("http://localhost:3001/api/productos", {
+        const res = await fetch(`${API_BASE_URL}/productos`, {
           cache: "no-store",
         });
+        if (!res.ok) throw new Error("Error al cargar productos");
         const data = await res.json();
         setProductos(Array.isArray(data) ? data : []);
       } catch (e) {
@@ -34,11 +35,11 @@ export default function ProductosPage() {
     fetchProductos();
   }, []);
 
-  // categorías únicas extraídas del array
+  // categorías únicas (IDs)
   const categorias = useMemo(() => {
     const setCats = new Set();
     productos.forEach((p) => {
-      if (p.categoriaId) setCats.add(p.categoriaId);
+      if (p.categoriaId) setCats.add(String(p.categoriaId));
     });
     return Array.from(setCats);
   }, [productos]);
@@ -48,34 +49,25 @@ export default function ProductosPage() {
     let arr = [...productos];
 
     if (categoria) {
-      arr = arr.filter(
-        (p) => String(p.categoriaId) === String(categoria)
-      );
+      arr = arr.filter((p) => String(p.categoriaId) === String(categoria));
     }
 
-    if (orden === "precio_asc")
-      arr.sort(
-        (a, b) =>
-          (a.precio_cents ?? a.precio ?? 0) -
-          (b.precio_cents ?? b.precio ?? 0)
-      );
-    else if (orden === "precio_desc")
-      arr.sort(
-        (a, b) =>
-          (b.precio_cents ?? b.precio ?? 0) -
-          (a.precio_cents ?? a.precio ?? 0)
-      );
+    const priceValue = (p) => {
+      // Si precio_cents existe, es centavos (entero). Si precio existe, asumimos pesos (number).
+      if (p?.precio_cents != null) return Number(p.precio_cents);
+      if (p?.precio != null) return Math.round(Number(p.precio) * 100);
+      return 0;
+    };
+
+    if (orden === "precio_asc") arr.sort((a, b) => priceValue(a) - priceValue(b));
+    else if (orden === "precio_desc") arr.sort((a, b) => priceValue(b) - priceValue(a));
     else if (orden === "nombre_asc")
-      arr.sort((a, b) =>
-        (a.nombre || "").localeCompare(b.nombre || "")
-      );
+      arr.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
     else if (orden === "nombre_desc")
-      arr.sort((a, b) =>
-        (b.nombre || "").localeCompare(a.nombre || "")
-      );
+      arr.sort((a, b) => (b.nombre || "").localeCompare(a.nombre || ""));
     else if (orden === "mas_vendido") {
-      // criterio simple: menor stock = más vendido
-      arr.sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
+      // Si no tenés métrica real, dejamos un orden estable (por nombre) para no depender de stock
+      arr.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
     }
 
     return arr;
@@ -101,7 +93,7 @@ export default function ProductosPage() {
           >
             <option value="">Todas</option>
             {categorias.map((c) => (
-              <option key={String(c)} value={c}>
+              <option key={c} value={c}>
                 {c}
               </option>
             ))}
@@ -115,7 +107,7 @@ export default function ProductosPage() {
             onChange={(e) => setOrden(e.target.value)}
             className="rounded border px-3 py-1 text-sm"
           >
-            <option value="mas_vendido">Más vendidos</option>
+            <option value="mas_vendido">Relevancia</option>
             <option value="precio_desc">Precio ↓</option>
             <option value="precio_asc">Precio ↑</option>
             <option value="nombre_asc">A → Z</option>

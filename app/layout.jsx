@@ -20,9 +20,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es">git show --stat --name-status 35a705f
-
-       <body className="min-h-screen bg-gray-50">
+    <html lang="es">
+      <body className="min-h-screen bg-gray-50">
         <Providers>
           <Header />
           <main className="min-h-[calc(100vh-56px)]">{children}</main>

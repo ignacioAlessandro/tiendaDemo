@@ -130,7 +130,7 @@ export default function Header() {
       </div>
 
       {/* Menú Mobile desplegable */}
-      {mobileOpen && (
+            {mobileOpen && (
         <div className="border-t bg-white md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
             <Link
@@ -202,7 +202,8 @@ export default function Header() {
             )}
           </div>
         </div>
-      )}.
+      )}
     </header>
   );
 }
+

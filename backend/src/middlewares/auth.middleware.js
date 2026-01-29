@@ -2,6 +2,9 @@
 import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.js";
 
+const ACCESS_SECRET =
+  process.env.JWT_SECRET || "dev-access-secret-cambiar-en-produccion";
+
 export const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -12,25 +15,26 @@ export const authMiddleware = async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, ACCESS_SECRET);
 
     const user = await prisma.usuario.findUnique({
       where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        nombre: true,
+        apellido: true,
+        documento: true,
+        telefono: true,
+      },
     });
 
     if (!user) {
       return res.status(401).json({ error: "Usuario no encontrado" });
     }
 
-    // Dejamos info útil en la request
     req.userId = user.id;
-    req.user = {
-      id: user.id,
-      email: user.email,
-      nombre: user.nombre,
-      documento: user.documento,
-      telefono: user.telefono,
-    };
+    req.user = user;
 
     next();
   } catch (err) {
